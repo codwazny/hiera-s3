@@ -16,14 +16,18 @@ class Hiera
                       :secret_access_key => Config[:s3][:secret])
                 else
                     # If credentials not defined, try IAM roles
-                    s3 = AWS::S3.new()
+                    s3 = AWS::S3.new
+                end
+                options = {}
+                if defined? Config[:s3][:encryption_key_path]
+                    options[:encryption_key] = IO.read(Config[:s3][:encryption_key_path]).strip
                 end
                 answer = nil
                 Backend.datasources(scope, order_override) do |source|
                     Hiera.debug("S3_backend invoked lookup")
                     begin
                         path = File.join(source, key)
-                        answer = Backend.parse_answer(s3.buckets[Config[:s3][:bucket]].objects[path].read.strip, scope)
+                        answer = Backend.parse_answer(s3.buckets[Config[:s3][:bucket]].objects[path].read(options).strip, scope)
                     rescue
                         Hiera.debug("Match not found in source " + source)
                     end
