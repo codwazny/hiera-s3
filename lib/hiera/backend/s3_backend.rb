@@ -24,9 +24,9 @@ class Hiera
                 end
                 answer = nil
                 Backend.datasources(scope, order_override) do |source|
-                    Hiera.debug("S3_backend invoked lookup")
                     begin
                         path = File.join(source, key)
+                        Hiera.debug("S3_backend invoked lookup: #{path}")
                         answer = Backend.parse_answer(s3.buckets[Config[:s3][:bucket]].objects[path].read(options).strip, scope)
                     rescue
                         Hiera.debug("Match not found in source " + source)
