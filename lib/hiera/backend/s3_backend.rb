@@ -10,16 +10,19 @@ class Hiera
             end
             def lookup(key, scope, order_override, resolution_type)
                 key = key.dup.gsub!('::','/')
+                Hiera.debug("S3_backend using lookup key: #{key}")
                 if defined? Config[:s3][:key]
+                    Hiera.debug("S3_backend using AWS key: #{Config[:s3][:key]}")
                     s3 = AWS::S3.new(
                       :access_key_id     => Config[:s3][:key],
                       :secret_access_key => Config[:s3][:secret])
                 else
-                    # If credentials not defined, try IAM roles
+                    Hiera.debug("S3_backend using IAM roles")
                     s3 = AWS::S3.new
                 end
                 options = {}
                 if defined? Config[:s3][:encryption_key_path]
+                    Hiera.debug("S3_backend using encryption key from: #{Config[:s3][:encryption_key_path]}")
                     options[:encryption_key] = IO.read(Config[:s3][:encryption_key_path]).strip
                 end
                 answer = nil
