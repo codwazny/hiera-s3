@@ -26,6 +26,7 @@ class Hiera
                     options[:encryption_key] = IO.read(Config[:s3][:encryption_key_path]).strip
                 end
                 answer = nil
+                Hiera.debug("S3_backend using bucket: #{Config[:s3][:bucket]}")
                 Backend.datasources(scope, order_override) do |source|
                     begin
                         path = File.join(source, key)
