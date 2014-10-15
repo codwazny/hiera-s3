@@ -3,7 +3,7 @@ require 'rubygems/package_task'
 
 spec = Gem::Specification.new do |s|
   s.name = "hiera-s3"
-  s.version = "0.0.0"
+  s.version = "0.1.0"
   s.author = "codwazny"
   s.email = "sidekicksellout@gmail.com"
   s.homepage = "https://github.com/codwazny/hiera-s3/"
