@@ -10,7 +10,7 @@ class Hiera
             end
             def lookup(key, scope, order_override, resolution_type)
                 key = key.dup.gsub!('::','/')
-                if defined? Config[:s3][:key]
+                if Config[:s3][:key]
                     s3 = AWS::S3.new(
                       :access_key_id     => Config[:s3][:key],
                       :secret_access_key => Config[:s3][:secret])
@@ -19,7 +19,7 @@ class Hiera
                     s3 = AWS::S3.new
                 end
                 options = {}
-                if defined? Config[:s3][:encryption_key_path]
+                if Config[:s3][:encryption_key_path]
                     options[:encryption_key] = IO.read(Config[:s3][:encryption_key_path]).strip
                 end
                 answer = nil
