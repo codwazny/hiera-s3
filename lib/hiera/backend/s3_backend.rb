@@ -8,8 +8,8 @@ class Hiera
                 require 'aws-sdk'
                 Hiera.debug("S3_backend initialized")
             end
-            def lookup(key, scope, order_override, resolution_type)
-                key = key.dup.gsub!('::','/')
+            def lookup(raw_key, scope, order_override, resolution_type)
+                key = raw_key.gsub('::','/')
                 Hiera.debug("S3_backend using lookup key: #{key}")
                 if Config[:s3][:key]
                     Hiera.debug("S3_backend using AWS key: #{Config[:s3][:key]}")
