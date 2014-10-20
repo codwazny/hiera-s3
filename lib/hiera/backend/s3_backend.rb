@@ -33,13 +33,18 @@ class Hiera
                     path = File.join(source, key)
                     Hiera.debug("S3_backend invoked lookup: #{path}")
                     # get data from the specified path
-                    bucket_data = s3.buckets[Config[:s3][:bucket]].objects[path].read(options)
+                    bucket_data = nil
+                    begin
+                        bucket_data = s3.buckets[Config[:s3][:bucket]].objects[path].read(options)
+                    rescue
+                    end
                     # bucket_data is nil if the key is not found
                     next unless bucket_data
                     Hiera.debug("Found #{key} in #{source}")
                     Hiera.debug("Raw data: #{bucket_data}")
-                    # data may be YAML-encoded in the bucket
-                    new_answer = Backend.parse_answer(YAML.load(bucket_data), scope)
+                    # if YAML detected, parse as YAML
+                    bucket_data = YAML.load(bucket_data) if !!bucket_data[/^---[^-]/m] 
+                    new_answer = Backend.parse_answer(bucket_data, scope)
                     Hiera.debug("YAML-parsed data: #{new_answer}")
                     case resolution_type
                     when :array
