@@ -6,6 +6,7 @@ class Hiera
             def initialize
                 require 'rubygems'
                 require 'aws-sdk'
+                require 'yaml'
                 Hiera.debug("S3_backend initialized")
             end
             def lookup(raw_key, scope, order_override, resolution_type)
@@ -28,12 +29,30 @@ class Hiera
                 answer = nil
                 Hiera.debug("S3_backend using bucket: #{Config[:s3][:bucket]}")
                 Backend.datasources(scope, order_override) do |source|
-                    begin
-                        path = File.join(source, key)
-                        Hiera.debug("S3_backend invoked lookup: #{path}")
-                        answer = Backend.parse_answer(s3.buckets[Config[:s3][:bucket]].objects[path].read(options).strip, scope)
-                    rescue
-                        Hiera.debug("Match not found in source " + source)
+                    # combine the source and the key to get the path
+                    path = File.join(source, key)
+                    Hiera.debug("S3_backend invoked lookup: #{path}")
+                    # get data from the specified path
+                    bucket_data = s3.buckets[Config[:s3][:bucket]].objects[path].read(options)
+                    # bucket_data is nil if the key is not found
+                    next unless bucket_data
+                    Hiera.debug("Found #{key} in #{source}")
+                    Hiera.debug("Raw data: #{bucket_data}")
+                    # data may be YAML-encoded in the bucket
+                    new_answer = Backend.parse_answer(YAML.load(bucket_data), scope)
+                    Hiera.debug("YAML-parsed data: #{new_answer}")
+                    case resolution_type
+                    when :array
+                        raise Exception, "Hiera type mismatch for key '#{key}': expected Array and got #{new_answer.class}" unless new_answer.kind_of? Array or new_answer.kind_of? String
+                        answer ||= []
+                        answer << new_answer
+                    when :hash
+                        raise Exception, "Hiera type mismatch for key '#{key}': expected Hash and got #{new_answer.class}" unless new_answer.kind_of? Hash
+                        answer ||= {}
+                        answer = Backend.merge_answer(new_answer,answer)
+                    else
+                        answer = new_answer
+                        break
                     end
                 end
                 return answer
